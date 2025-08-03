@@ -1,60 +1,55 @@
 import math
+from queue import PriorityQueue
+
 G = {
-    'A':{'B':3,'C':1}, 
-    'B':{'A':3,'C':7,'D':5,'E':1},
-    'C':{'A':1,'B':7,'D':2},
-    'D':{'B':5,'C':2,'E':7},
-    'E':{'B':1,'D':7}
+    's':{'t': 10, 'y': 5 },
+    't':{'y':2, 'x':1},
+    'x':{'z': 4},
+    'y':{'x':9, 't':3, 'z':2},
+    'z':{'x':6, 's':7}
 }
 
-def initialize(G,start):
+def INITIALIZE_SINGLE_SOURCE(G, s):
     cost = dict()
-    previous = dict()
-    for vertex in G:
+    prev = dict()
+    for vertex in G.keys():
         cost[vertex] = math.inf
-        previous[vertex] = " "
-    cost[start] = 0
-    return cost, previous
+        prev[vertex] = " "
+    cost[s] = 0
+    return cost, prev    
 
-def relax(G, u, v, cost, previous):
+def relax(G, u, v, cost, prev):
     if cost[v] > cost[u] + G[u][v]:
         cost[v] = cost[u] + G[u][v]
-        previous[u] = v
-    return cost, previous
+        prev[v] = u
+    return cost, prev
 
-def compute_least_cost_vertex(cost,visited):
-    leastCost = math.inf
-    leastCostVertex = " "
-    for vertex in cost:
-       if vertex not in visited and cost[vertex] < leastCost:
-            leastCost = cost[vertex]
-            leastCostVertex = vertex
-    return leastCostVertex
-
-def compute_shortest_path(G, start):
-    cost, previous = initialize(G, start)
+def DJ(G, s):
+    cost, prev = INITIALIZE_SINGLE_SOURCE(G, s)
+    PQ = PriorityQueue()
+    for vertex in G.keys():
+        PQ.put((cost[vertex], vertex))
     visited = []
-    while(len(visited)<len(G)):
-        currentVertex = compute_least_cost_vertex(cost,visited)
-        visited.append(currentVertex)
+    while(len(visited) != len(G.keys())):
+        _, currentVertex = PQ.get()
+        visited.append(currentVertex)  
         for chimeki in G[currentVertex]:
             if chimeki not in visited:
-                cost, previous = relax(G,currentVertex,chimeki, cost, previous)
-    return cost, previous
+                cost, prev = relax(G,currentVertex,chimeki, cost, prev)
+    return cost, prev
 
-
-def reconstruct_path(previous, vertex):
+def RECONTRUCT_PATH(vertex, prev):
     path = vertex
-    while(previous[vertex]!=' '):
-        path = previous[vertex]+'->'+ path
-        vertex = previous[vertex]
+    while(prev[vertex]!=' '):
+        path = prev[vertex]+'->'+ path
+        vertex = prev[vertex]
     return path
 
-start = 'A'
-cost, previous = compute_shortest_path(G, start)
-print(cost)
-print(previous)
 
-for vertex in G:
-    print(f'Shortest path from {start} to {vertex} is {reconstruct_path(previous, vertex)}')
-    print(f'Cost of path is {cost[vertex]}')
+s = 's'
+cost, prev = DJ(G, s)
+for vertex in G.keys():
+    print(f'Shortest Path from {s} to {vertex} is {RECONTRUCT_PATH(vertex, prev)}')
+    print(f'Cost is {cost[vertex]}')
+
+
