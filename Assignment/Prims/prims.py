@@ -1,43 +1,61 @@
-import sys
+import math
+G = {
+    'A': {'B': 3, 'C': 1},
+    'B': {'A': 3, 'C': 7, 'D': 5, 'E': 1},
+    'C': {'B': 7, 'D': 2, 'A': 1},
+    'D': {'B': 5, 'C': 2, 'E': 7},
+    'E': {'B': 1, 'D': 7}
+}
 
-def prims_algorithm(graph):
-    num_vertices = len(graph)
-    selected = [False] * num_vertices  # Track selected vertices
-    min_edge = [sys.maxsize] * num_vertices  # Store minimum edge weight
-    parent = [-1] * num_vertices  # Store parent of each vertex in MST
+def initialize(G, start):
+    cost = dict()
+    previous = dict()
+    for vertex in G:
+        cost[vertex] = math.inf
+        previous[vertex] = ""
+    cost[start] = 0
+    return cost, previous
 
-    min_edge[0] = 0  # Start from vertex 0
+def computeLeastCostVertex(cost, visited):
+    leastCost = math.inf
+    leastCostVertex = None
+    for vertex in cost:
+        if vertex not in visited and cost[vertex] < leastCost:
+            leastCost = cost[vertex]
+            leastCostVertex = vertex
+    return leastCostVertex
 
-    for _ in range(num_vertices):
-        # Find the vertex with the minimum edge weight that is not yet included in MST
-        min_weight = sys.maxsize
-        u = -1
+def prim(G, start):
+    cost, previous = initialize(G, start)
+    visited = []
+    total_cost = 0
+    mst_edges = []
+    
+    while len(visited) < len(G):
+        currentVertex = computeLeastCostVertex(cost, visited)
+        if currentVertex is None:
+            break
+            
+        visited.append(currentVertex)
+        
+        if previous[currentVertex]:
+            edge_cost = G[currentVertex][previous[currentVertex]]
+            mst_edges.append((previous[currentVertex], currentVertex, edge_cost))
+            total_cost += edge_cost
+        
+        for neighbor in G[currentVertex]:
+            if neighbor not in visited:
+                weight = G[currentVertex][neighbor]
+                if weight < cost[neighbor]:
+                    cost[neighbor] = weight
+                    previous[neighbor] = currentVertex
+    
+    return mst_edges, total_cost
 
-        for v in range(num_vertices):
-            if not selected[v] and min_edge[v] < min_weight:
-                min_weight = min_edge[v]
-                u = v
+start = 'A'
+mst_edges, total_cost = prim(G, start)
 
-        selected[u] = True  # Include the vertex in MST
-
-        # Update minimum edge weights for adjacent vertices
-        for v in range(num_vertices):
-            if graph[u][v] and not selected[v] and graph[u][v] < min_edge[v]:
-                min_edge[v] = graph[u][v]
-                parent[v] = u
-
-    # Print MST
-    print("Edge \tWeight")
-    for i in range(1, num_vertices):
-        print(f"{parent[i]} - {i} \t{graph[i][parent[i]]}")
-
-# Example graph represented as an adjacency matrix
-graph = [
-    [0, 2, 0, 6, 0],
-    [2, 0, 3, 8, 5],
-    [0, 3, 0, 0, 7],
-    [6, 8, 0, 0, 9],
-    [0, 5, 7, 9, 0]
-]
-
-prims_algorithm(graph)
+print(f"Minimum Spanning Tree edges (starting from {start}):")
+for edge in mst_edges:
+    print(f"{edge[0]} -> {edge[1]} : {edge[2]}")
+print(f"Total cost of MST: {total_cost}")
